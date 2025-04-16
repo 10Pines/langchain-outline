@@ -1,12 +1,8 @@
 [project]
 name = "langchain-outline"
-version = "0.1.0"
+version = "0.1.1"
 description = "Langchain Document loader for Outline"
 authors = [
-    {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
-    {name = "Luciano Romeo",email = "luciano.romeo@10pines.com"}
-]
-maintainers = [
     {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
     {name = "Luciano Romeo",email = "luciano.romeo@10pines.com"}
 ]
