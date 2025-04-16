@@ -19,7 +19,7 @@ python = ">=3.9, <3.13"
 langchain-core = "^0.3.52"
 langchain-community = "^0.3.21"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.group.test.dependencies]
 pytest = "^8.3.5"
 requests-mock = "^1.12.1"
 

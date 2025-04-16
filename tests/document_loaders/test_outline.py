@@ -4,8 +4,7 @@ import pytest
 import requests
 import requests_mock
 
-from langchain_outline.outline import OutlineLoader
-
+from langchain_outline.document_loaders.outline import OutlineLoader
 
 
 @pytest.fixture

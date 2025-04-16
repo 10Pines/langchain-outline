@@ -1,1 +1,7 @@
 .vscode
+venv/
+.env
+*.egg-info
+.coverage
+!**/.gitkeep
+dist
