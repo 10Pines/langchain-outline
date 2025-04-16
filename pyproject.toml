@@ -6,6 +6,10 @@ authors = [
     {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
     {name = "Luciano Romeo",email = "luciano.romeo@10pines.com"}
 ]
+maintainers = [
+    {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
+    {name = "Luciano Romeo",email = "luciano.romeo@10pines.com"}
+]
 readme = "README.md"
 [tool.poetry]
 packages = [{include = "langchain_outline", from = "src"}]
