@@ -34,7 +34,7 @@ loader = OutlineLoader(
 )
 
 # Load documents (iteratively)
-docs_iterator = loader.lazy_load()
+docs_iterator = loader.load()
 for doc in docs_iterator:
     print(f"Loaded document: {doc.metadata['title']}")
     # Process the document...
