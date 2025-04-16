@@ -22,3 +22,6 @@ langchain-community = "^0.3.21"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.5"
 requests-mock = "^1.12.1"
+
+[project.urls]
+"Homepage" = "https://github.com/10Pines/langchain-outline"
