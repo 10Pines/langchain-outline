@@ -44,3 +44,32 @@ for doc in docs_iterator:
 # print(f"Loaded {len(all_docs)} documents.")
 ````
 Replace "YOUR_OUTLINE_URL" and "YOUR_API_KEY" with your actual Outline instance URL and API key.
+
+## For maintainers
+
+
+# To build and test publishing to TestPyPi
+To publish a new version of the package you can use poetry (or twine, etc).  First test using TestPyPi first.
+
+1. Make sure you have TestPyPi as a repo:
+
+`poetry config repositories.testpypi https://test.pypi.org/legacy/`
+
+2. Obtain API token from TestPyPi and add it to poetry config:
+
+`poetry config pypi-token.testpypi <<token from testpypi>>`
+
+3. Publish the package to TestPypi (make sure version defined in pyproject.toml follows PEP440):
+
+`poetry publish --build --repository testpypi`
+
+# To publish to PyPi
+To publish a new version of the package you can use poetry (or twine, etc).  First test using TestPyPi first.
+
+1. Obtain API token from PyPi and add it to poetry config:
+
+`poetry config pypi-token.pypi <<token from pypi>>`
+
+3. Publish the package to PyPi (make sure version defined in pyproject.toml follows PEP440):
+
+`poetry publish --build`
