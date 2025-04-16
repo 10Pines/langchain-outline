@@ -1,0 +1,24 @@
+[project]
+name = "langchain-outline"
+version = "0.1.0"
+description = "Langchain Document loader for Outline"
+authors = [
+    {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
+    {name = "Luciano Romeo",email = "luciano.romeo@10pines.com"}
+]
+readme = "README.md"
+[tool.poetry]
+packages = [{include = "langchain_outline", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.main.dependencies]
+python = ">=3.9, <3.13"
+langchain-core = "^0.3.52"
+langchain-community = "^0.3.21"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+requests-mock = "^1.12.1"
