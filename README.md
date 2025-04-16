@@ -34,14 +34,14 @@ loader = OutlineLoader(
 )
 
 # Load documents (iteratively)
-docs_iterator = loader.load()
+docs_iterator = loader.lazy_load()
 for doc in docs_iterator:
     print(f"Loaded document: {doc.metadata['title']}")
     # Process the document...
 
 # Or load all documents into a list (might consume more memory for large instances)
-# all_docs = loader.load()
-# print(f"Loaded {len(all_docs)} documents.")
+all_docs = loader.load()
+print(f"Loaded {len(all_docs)} documents.")
 ````
 Replace "YOUR_OUTLINE_URL" and "YOUR_API_KEY" with your actual Outline instance URL and API key.
 
