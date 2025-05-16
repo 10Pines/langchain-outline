@@ -64,7 +64,7 @@ class OutlineLoader(BaseLoader):
             yield Document(page_content=text, metadata=metadata)
 
     def _build_metadata(self, result: Any) -> Dict:
-        metadata = {"source": f"{self.outline_base_url}/{result['url']}"}
+        metadata = {"source": f"{self.outline_base_url}{result['url']}"}
         metadata["id"] = result["id"]
         metadata["title"] = result["title"]
         metadata["createdAt"] = result["createdAt"]
