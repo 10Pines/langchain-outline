@@ -114,3 +114,24 @@ def test_api_error(outline_loader: OutlineLoader) -> None:
 
         with pytest.raises(requests.exceptions.HTTPError):
             outline_loader.load()
+
+
+def test_document_metadata(
+    outline_loader: OutlineLoader,
+    mock_response_single_page: Dict,
+) -> None:
+    with requests_mock.Mocker() as m:
+        m.post("http://outline.test/api/documents.list", json=mock_response_single_page)
+
+        documents = outline_loader.load()
+
+        assert len(documents) == 1
+        document = documents[0]
+
+        # Check that all metadata fields are present with correct values
+        expected_source = "http://outline.test/doc/test-RTYIxmoduo"
+        assert document.metadata["source"] == expected_source
+        assert document.metadata["id"] == "1"
+        assert document.metadata["title"] == "Test 1"
+        assert document.metadata["createdAt"] == "2024-03-26T20:00:01.781Z"
+        assert document.metadata["updatedAt"] == "2024-03-26T20:00:01.781Z"
