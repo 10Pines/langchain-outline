@@ -65,10 +65,9 @@ class OutlineLoader(BaseLoader):
 
     def _build_metadata(self, result: Any) -> Dict:
         metadata = {"source": f"{self.outline_base_url}{result['url']}"}
-        metadata["id"] = result["id"]
-        metadata["title"] = result["title"]
-        metadata["createdAt"] = result["createdAt"]
-        metadata["updatedAt"] = result["updatedAt"]
+        metadata_keys = ["id", "title", "createdAt", "updatedAt", "deletedAt", "archivedAt", "isCollectionDeleted", "parentDocumentId", "collectionId"]
+        for key in metadata_keys:
+            metadata[key] = result.get(key)
         return metadata
 
     def _extract_pagination_info(self, pagination_data: Dict) -> Tuple[int, int]:

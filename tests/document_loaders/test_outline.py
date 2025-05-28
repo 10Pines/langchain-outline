@@ -25,6 +25,11 @@ def mock_response_single_page() -> Dict:
                 "createdAt": "2024-03-26T20:00:01.781Z",
                 "updatedAt": "2024-03-26T20:00:01.781Z",
                 "url": "/doc/test-RTYIxmoduo",
+                "archivedAt": None,
+                "deletedAt": None,
+                "collectionId": "1899bf4d-98be-403a-baa2-ecc1e3361380",
+                "parentDocumentId": None,
+                "isCollectionDeleted": False,
             }
         ],
         "pagination": {
@@ -45,6 +50,11 @@ def mock_response_multiple_pages_page_1() -> Dict:
                 "createdAt": "2024-03-26T20:00:01.781Z",
                 "updatedAt": "2024-03-26T20:00:01.781Z",
                 "url": "/doc/test-RTYIxmoduo",
+                "archivedAt": None,
+                "deletedAt": None,
+                "collectionId": "1899bf4d-98be-403a-baa2-ecc1e3361380",
+                "parentDocumentId": None,
+                "isCollectionDeleted": False,
             }
         ],
         "pagination": {
@@ -65,6 +75,11 @@ def mock_response_multiple_pages_page_2() -> Dict:
                 "createdAt": "2024-03-26T20:00:01.781Z",
                 "updatedAt": "2024-03-26T20:00:01.781Z",
                 "url": "/doc/test-RTYIxmodua",
+                "archivedAt": None,
+                "deletedAt": None,
+                "collectionId": "1899bf4d-98be-403a-baa2-ecc1e3361380",
+                "parentDocumentId": None,
+                "isCollectionDeleted": False,
             }
         ],
         "pagination": {
@@ -135,3 +150,8 @@ def test_document_metadata(
         assert document.metadata["title"] == "Test 1"
         assert document.metadata["createdAt"] == "2024-03-26T20:00:01.781Z"
         assert document.metadata["updatedAt"] == "2024-03-26T20:00:01.781Z"
+        assert document.metadata["archivedAt"] == None
+        assert document.metadata["isCollectionDeleted"] == False
+        assert document.metadata["parentDocumentId"] == None
+        assert document.metadata["collectionId"] == "1899bf4d-98be-403a-baa2-ecc1e3361380"
+        assert document.metadata["deletedAt"] == None
