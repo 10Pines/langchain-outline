@@ -335,4 +335,98 @@ def test_fetch_no_documents_in_collection(
         
         documents = list(outline_loader.lazy_load()) 
 
-        assert len(documents) == 0
+@pytest.fixture
+def mock_response_collections_list_multiple_items() -> Dict:
+    return {
+        "data": [
+            {
+                "id": "col1",
+                "name": "Collection 1",
+                "description": "First collection",
+                "permission": "read",
+            },
+            {
+                "id": "col2",
+                "name": "Collection 2",
+                "description": "Second collection",
+                "permission": "read",
+            },
+        ],
+        "pagination": {"nextPath": None, "total": 2},
+    }
+
+def test_continue_on_failure_collection_error(
+    mock_response_collections_list_multiple_items: Dict,
+    mock_response_single_page: Dict,
+    mock_response_doc_group_memberships_for_doc1: Dict,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    loader = OutlineLoader(
+        outline_base_url="http://outline.test",
+        outline_api_key="test-api-key",
+        continue_on_failure=True
+    )
+    with requests_mock.Mocker() as m:
+        m.post("http://outline.test/api/collections.list", json=mock_response_collections_list_multiple_items)
+        # Fail for col1, succeed for col2
+        m.post("http://outline.test/api/documents.list", [
+            {"status_code": 500},
+            {"json": mock_response_single_page}
+        ])
+        m.post("http://outline.test/api/documents.group_memberships", json=mock_response_doc_group_memberships_for_doc1)
+
+        documents = list(loader.lazy_load())
+
+        assert len(documents) == 1
+        assert documents[0].page_content == "Test document 1"
+        assert "Error fetching documents for collection 'Collection 1'" in caplog.text
+
+def test_continue_on_failure_group_memberships_error(
+    mock_response_collections_list_single_item: Dict,
+    mock_response_single_page: Dict,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    loader = OutlineLoader(
+        outline_base_url="http://outline.test",
+        outline_api_key="test-api-key",
+        continue_on_failure=True
+    )
+    with requests_mock.Mocker() as m:
+        m.post("http://outline.test/api/collections.list", json=mock_response_collections_list_single_item)
+        m.post("http://outline.test/api/documents.list", json=mock_response_single_page)
+        m.post("http://outline.test/api/documents.group_memberships", status_code=403)
+
+        documents = list(loader.lazy_load())
+
+        assert len(documents) == 1
+        assert documents[0].metadata["read_groups"] == []
+        assert "Could not fetch group permissions for document 'Test 1'" in caplog.text
+
+def test_continue_on_failure_document_processing_error(
+    mock_response_collections_list_single_item: Dict,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    loader = OutlineLoader(
+        outline_base_url="http://outline.test",
+        outline_api_key="test-api-key",
+        continue_on_failure=True
+    )
+    # Document missing 'text' key will cause a KeyError in lazy_load
+    bad_document_response = {
+        "data": [
+            {"id": "bad_doc", "title": "Bad Doc"}, # missing 'text'
+            {"id": "good_doc", "text": "Good content", "title": "Good Doc", "url": "/good"}
+        ],
+        "pagination": {"total": 2, "nextPath": None}
+    }
+    with requests_mock.Mocker() as m:
+        m.post("http://outline.test/api/collections.list", json=mock_response_collections_list_single_item)
+        m.post("http://outline.test/api/documents.list", json=bad_document_response)
+        # Mock _build_metadata stuff for the good doc
+        m.post("http://outline.test/api/documents.group_memberships", json={"data": {"groups": []}, "pagination": {"total":0}})
+
+        documents = list(loader.lazy_load())
+
+        assert len(documents) == 1
+        assert documents[0].page_content == "Good content"
+        assert "Error processing document 'Bad Doc'" in caplog.text

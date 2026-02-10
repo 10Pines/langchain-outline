@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Tuple, Union
 
@@ -5,6 +6,8 @@ import requests
 from langchain_core.documents import Document
 
 from langchain_community.document_loaders.base import BaseLoader
+
+logger = logging.getLogger(__name__)
 
 class OutlineLoader(BaseLoader):
     """Load `Outline` documents.
@@ -36,6 +39,7 @@ class OutlineLoader(BaseLoader):
         outline_api_key: Union[str | None] = None,
         outline_collection_id_list: Union[List[str] | None] = None,
         page_size: int = 25,
+        continue_on_failure: bool = False,
     ):
         """Initialize with url, api_key and requested page size for API results
         pagination.
@@ -47,6 +51,8 @@ class OutlineLoader(BaseLoader):
         :param outline_collection_id_list: List of collection ids to be retrieved. If None all will be retrieved.
 
         :param page_size: How many outline documents should be retrieved per request
+
+        :param continue_on_failure: Whether to continue loading documents even if there is an error during fetching.
         """
 
         self.outline_base_url = outline_base_url or os.environ["OUTLINE_INSTANCE_URL"]
@@ -57,10 +63,11 @@ class OutlineLoader(BaseLoader):
         self.collection_info_endpoint = f"{self.outline_base_url}/api/collections.info"
         self.collection_ids = outline_collection_id_list
         self.page_size = page_size
+        self.continue_on_failure = continue_on_failure
         self.headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": f"Bearer {outline_api_key}",
+            "Authorization": f"Bearer {self.outline_api_key}",
         }
 
     def lazy_load(self) -> Iterator[Document]:
@@ -68,17 +75,45 @@ class OutlineLoader(BaseLoader):
         Loads documents from Outline.
         """
         for collection in self._collections():
-            documents = self._fetch_documents(collection["id"])
-            for document in documents:
-                text = document["text"]
-                metadata = self._build_metadata(document, collection)
-                yield Document(page_content=text, metadata=metadata)
+            try:
+                documents = self._fetch_documents(collection["id"])
+                for document in documents:
+                    try:
+                        text = document["text"]
+                        metadata = self._build_metadata(document, collection)
+                        yield Document(page_content=text, metadata=metadata)
+                    except Exception as e:
+                        if self.continue_on_failure:
+                            logger.warning(
+                                f"Error processing document "
+                                f"'{document.get('title', document.get('id', 'unknown'))}': {e}"
+                            )
+                            continue
+                        raise
+            except Exception as e:
+                if self.continue_on_failure:
+                    logger.warning(
+                        f"Error fetching documents for collection "
+                        f"'{collection.get('name', collection['id'])}': {e}"
+                    )
+                    continue
+                raise
 
     def _build_metadata(self, document: Any, collection: Any) -> Dict:
-        document_group_permission_metadata = self._fetch_document_group_permission_metadata(document["id"])
         read_groups = []
-        for document_group_permission in document_group_permission_metadata:
-            read_groups.extend(document_group_permission["groups"])
+        try:
+            document_group_permission_metadata = self._fetch_document_group_permission_metadata(document["id"])
+            for document_group_permission in document_group_permission_metadata:
+                read_groups.extend(document_group_permission["groups"])
+        except Exception as e:
+            if self.continue_on_failure:
+                logger.warning(
+                    f"Could not fetch group permissions for document "
+                    f"'{document.get('title', document.get('id', 'unknown'))}': {e}"
+                )
+            else:
+                raise
+
         metadata = {"source": f"{self.outline_base_url}{document['url']}"}
         metadata["collection_permission"] = collection["permission"]
         metadata["collection_name"] = collection["name"]
@@ -146,14 +181,13 @@ class OutlineLoader(BaseLoader):
 
     def _extract_pagination_info(self, pagination_data: Dict) -> Tuple[int, int]:
         next_path = pagination_data.get("nextPath", "")
-        next_offset = 0
+        total = pagination_data.get("total", 0)
+        next_offset = total
         if next_path:
             try:
                 offset_str = next_path.split("offset=")[1].split("&")[0]
                 next_offset = int(offset_str)
             except (IndexError, ValueError):
-                next_offset = 0
-
-        total = pagination_data.get("total", 0)
+                next_offset = total
 
         return next_offset, total
