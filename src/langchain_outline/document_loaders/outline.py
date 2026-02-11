@@ -84,7 +84,7 @@ class OutlineLoader(BaseLoader):
                         yield Document(page_content=text, metadata=metadata)
                     except Exception as e:
                         if self.continue_on_failure:
-                            logger.warning(
+                            logger.error(
                                 f"Error processing document "
                                 f"'{document.get('title', document.get('id', 'unknown'))}': {e}"
                             )
@@ -92,7 +92,7 @@ class OutlineLoader(BaseLoader):
                         raise
             except Exception as e:
                 if self.continue_on_failure:
-                    logger.warning(
+                    logger.error(
                         f"Error fetching documents for collection "
                         f"'{collection.get('name', collection['id'])}': {e}"
                     )
@@ -107,7 +107,7 @@ class OutlineLoader(BaseLoader):
                 read_groups.extend(document_group_permission["groups"])
         except Exception as e:
             if self.continue_on_failure:
-                logger.warning(
+                logger.error(
                     f"Could not fetch group permissions for document "
                     f"'{document.get('title', document.get('id', 'unknown'))}': {e}"
                 )
