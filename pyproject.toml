@@ -1,6 +1,6 @@
 [project]
 name = "langchain-outline"
-version = "0.4.0"
+version = "0.5.0"
 description = "Langchain Document loader for Outline"
 authors = [
     {name = "Diego Tabares",email = "diego.tabares@10pines.com"},
@@ -15,9 +15,9 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.main.dependencies]
-python = ">=3.9, <3.13"
-langchain-core = "^0.3.52"
-langchain-community = "^0.3.21"
+python = ">=3.10, <3.13"
+langchain-core = ">=0.3.52,<2.0.0"
+langchain-community = ">=0.3.21,<0.5.0"
 requests = "^2.32.3"
 httpx = "^0.28.1"
 
