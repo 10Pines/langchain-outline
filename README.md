@@ -45,6 +45,33 @@ print(f"Loaded {len(all_docs)} documents.")
 ````
 Replace "YOUR_OUTLINE_URL" and "YOUR_API_KEY" with your actual Outline instance URL and API key.
 
+### Async usage
+
+`OutlineLoader` also supports non-blocking async loading, backed by `httpx.AsyncClient`, for use in async applications:
+
+````python
+import asyncio
+from langchain_outline.outline import OutlineLoader
+
+async def main():
+    loader = OutlineLoader(
+        outline_base_url="YOUR_OUTLINE_URL",
+        outline_api_key="YOUR_API_KEY"
+    )
+
+    # Load documents (iteratively)
+    async for doc in loader.alazy_load():
+        print(f"Loaded document: {doc.metadata['title']}")
+        # Process the document...
+
+    # Or load all documents into a list (might consume more memory for large instances)
+    all_docs = await loader.aload()
+    print(f"Loaded {len(all_docs)} documents.")
+
+asyncio.run(main())
+````
+`httpx` is a direct dependency of this package used for the async loading path.
+
 ## For maintainers
 
 
