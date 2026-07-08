@@ -77,7 +77,7 @@ class OutlineLoader(BaseLoader):
         """
         for collection in self._collections():
             try:
-                documents = self._fetch_documents(collection["id"])
+                documents = self._fetch_all(self.document_list_endpoint, {"collectionId": collection["id"]})
                 for document in documents:
                     try:
                         text = document["text"]
@@ -112,7 +112,7 @@ class OutlineLoader(BaseLoader):
         async with httpx.AsyncClient(headers=self.headers) as client:
             async for collection in self._acollections(client):
                 try:
-                    documents = self._afetch_documents(client, collection["id"])
+                    documents = self._afetch_all(client, self.document_list_endpoint, {"collectionId": collection["id"]})
                     async for document in documents:
                         try:
                             text = document["text"]
@@ -153,7 +153,9 @@ class OutlineLoader(BaseLoader):
     def _build_metadata(self, document: Any, collection: Any) -> Dict:
         read_groups = []
         try:
-            document_group_permission_metadata = self._fetch_document_group_permission_metadata(document["id"])
+            document_group_permission_metadata = self._fetch_all(
+                self.document_group_membership_endpoint, {"id": document["id"]}, lambda dic: [dic]
+            )
             for document_group_permission in document_group_permission_metadata:
                 read_groups.extend(document_group_permission["groups"])
         except Exception as e:
@@ -162,20 +164,14 @@ class OutlineLoader(BaseLoader):
             else:
                 raise
 
-        metadata = {"source": f"{self.outline_base_url}{document['url']}"}
-        metadata["collection_permission"] = collection["permission"]
-        metadata["collection_name"] = collection["name"]
-        metadata["collection_description"] = collection["description"]
-        metadata["read_groups"] = read_groups
-        metadata_keys = ["id", "title", "createdAt", "updatedAt", "deletedAt", "archivedAt", "isCollectionDeleted", "parentDocumentId", "collectionId"]
-        for key in metadata_keys:
-            metadata[key] = document.get(key)
-        return metadata
+        return self._compose_metadata(document, collection, read_groups)
 
     async def _abuild_metadata(self, client: httpx.AsyncClient, document: Any, collection: Any) -> Dict:
         read_groups = []
         try:
-            document_group_permission_metadata = self._afetch_document_group_permission_metadata(client, document["id"])
+            document_group_permission_metadata = self._afetch_all(
+                client, self.document_group_membership_endpoint, {"id": document["id"]}, lambda dic: [dic]
+            )
             async for document_group_permission in document_group_permission_metadata:
                 read_groups.extend(document_group_permission["groups"])
         except Exception as e:
@@ -184,6 +180,9 @@ class OutlineLoader(BaseLoader):
             else:
                 raise
 
+        return self._compose_metadata(document, collection, read_groups)
+
+    def _compose_metadata(self, document: Any, collection: Any, read_groups: List) -> Dict:
         metadata = {"source": f"{self.outline_base_url}{document['url']}"}
         metadata["collection_permission"] = collection["permission"]
         metadata["collection_name"] = collection["name"]
@@ -194,28 +193,19 @@ class OutlineLoader(BaseLoader):
             metadata[key] = document.get(key)
         return metadata
 
-    def _fetch_document_group_permission_metadata(self, document_id:str) -> Iterator[Dict]:
-        query = { "id": document_id }
-        yield from self._fetch_all(self.document_group_membership_endpoint, query, lambda dic: [dic])
-
-    async def _afetch_document_group_permission_metadata(self, client: httpx.AsyncClient, document_id: str) -> AsyncIterator[Dict]:
-        query = { "id": document_id }
-        async for entry in self._afetch_all(client, self.document_group_membership_endpoint, query, lambda dic: [dic]):
-            yield entry
-
     def _collections(self) ->  Iterator[Dict]:
         if self.collection_ids:
             for collection_id in self.collection_ids:
                 yield self._fetch_collection(collection_id)
         else:
-            yield from self._fetch_all_collections()
+            yield from self._fetch_all(self.collection_list_endpoint)
 
     async def _acollections(self, client: httpx.AsyncClient) -> AsyncIterator[Dict]:
         if self.collection_ids:
             for collection_id in self.collection_ids:
                 yield await self._afetch_collection(client, collection_id)
         else:
-            async for collection in self._afetch_all_collections(client):
+            async for collection in self._afetch_all(client, self.collection_list_endpoint):
                 yield collection
 
     def _fetch_collection(self, collection_id:str) -> Iterator[Dict]:
@@ -231,22 +221,6 @@ class OutlineLoader(BaseLoader):
         response.raise_for_status()
         response_json = response.json()
         return response_json["data"]
-
-    def _fetch_all_collections(self) -> Iterator[Dict]:
-        return self._fetch_all(self.collection_list_endpoint)
-
-    async def _afetch_all_collections(self, client: httpx.AsyncClient) -> AsyncIterator[Dict]:
-        async for collection in self._afetch_all(client, self.collection_list_endpoint):
-            yield collection
-
-    def _fetch_documents(self, collection_id: str) -> Iterator[Dict]:
-        query = { "collectionId": collection_id }
-        return self._fetch_all(self.document_list_endpoint, query)
-
-    async def _afetch_documents(self, client: httpx.AsyncClient, collection_id: str) -> AsyncIterator[Dict]:
-        query = { "collectionId": collection_id }
-        async for document in self._afetch_all(client, self.document_list_endpoint, query):
-            yield document
 
     def _fetch_all(self, endpoint: str, query: Union[Dict[str, str] | None] = None, entries_adapter: Callable = no_transform) -> Iterator[Dict]:
         starting_offset = 0
